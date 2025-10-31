@@ -209,4 +209,4 @@ __marimo__/
 # own stuff
 data/
 mlruns/
-models/
+trained_models/
