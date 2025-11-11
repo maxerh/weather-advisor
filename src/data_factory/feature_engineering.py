@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 
-class FeatureGenerator():
+from src.visualizations.visualizer import Visualizer
+
+class FeatureGenerator(Visualizer):
     def __init__(self, path_with_filename: str):
+        super().__init__()
         self.path_with_file_name = path_with_filename
         self.dataframe = None
 
@@ -42,9 +45,12 @@ class FeatureGenerator():
         wd_rad = np.deg2rad(self.dataframe['wind_direction_10m'])
         self.dataframe['wind_u'] = self.dataframe['wind_speed_10m'] * np.cos(wd_rad)
         self.dataframe['wind_v'] = self.dataframe['wind_speed_10m'] * np.sin(wd_rad)
-        print(self.dataframe.head())
+        #print(self.dataframe.head())
 
 
 if __name__ == "__main__":
     feature_gen = FeatureGenerator("../../data/history/munich_weather_2015_2024.csv")
     feature_gen.create_features()
+    feature_gen.visualize_single_channel(feature_gen.dataframe[['temperature_2m']].values,
+                                         channel=0, channel_first=False,
+                                         title="Temperature Over Time", xlabel="Time", ylabel="Temperature (°C)")
