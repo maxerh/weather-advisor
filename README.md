@@ -6,10 +6,10 @@ This is a side project for weather forecasting with different tools.
 ## Roadmap
 
 1. Data exploration
-   - [ ] identify features: temperature, humidity, pressure, wind, wind direction 
-   - [ ] get historical data and store locally for training
+   - [x] identify features: temperature, humidity, pressure, wind, wind direction 
+   - [x] get historical data and store locally for training
    - [ ] data visualizations
-   - [ ] clean and format data
+   - [x] clean and format data
    - [ ] feature engineering: find/calculate other features 
      - [ ] values at t-1,...
      - [ ] rolling mean and std values
