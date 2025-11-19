@@ -31,11 +31,6 @@ class FeatureGenerator(Visualizer):
         if self.dataframe is None:
             self.load_data()
 
-        #df_hourly['date'] = df_hourly['time'].dt.date
-        # Merge daily sunrise/sunset
-        #df_daily['date'] = df_daily['time'].dt.date  # if original daily has time as midnight
-        #df_hourly = df_hourly.merge(df_daily[['date', 'sunrise', 'sunset', 'daylight_duration']], on='date', how='left')
-
         # Derive features
         self.dataframe['date'] = self.dataframe['time'].dt.date
 
@@ -78,46 +73,197 @@ class FeatureGenerator(Visualizer):
         })
         return stats
 
+    def detect_binary_columns(self, df):
+        binary_cols = []
+        for col in df.select_dtypes(include=[np.number]).columns:
+            unique_values = df[col].dropna().unique()
+            if set(unique_values).issubset({0, 1}):
+                binary_cols.append(col)
+        return binary_cols
 
-    def rolling_mean(self, df: pd.DataFrame, window: int) -> pd.DataFrame:
-        """Compute rolling mean for numeric columns in the DataFrame."""
-        # Compute rolling mean on those columns
-        rolled = df[self.numeric_cols].rolling(window=window, min_periods=1).mean()
-        return pd.concat([self.non_numeric, rolled], axis=1)
 
-    def rolling_mean_time_based(self, df: pd.DataFrame, window: str) -> pd.DataFrame:
-        """Compute rolling mean for numeric columns in the DataFrame based on time window."""
-        # Make sure the index is a datetime index
-        df = df.set_index('time')  # if time is a column
-        # Only roll numeric columns
-        rolled = df[self.numeric_cols].rolling(window=window, min_periods=1).mean()
-        return rolled.reset_index()
-
-    def z_normalize(self, df: pd.DataFrame) -> pd.DataFrame:
+    def rolling_mean(self, df: pd.DataFrame, window: int, include_binary: bool = False, binary_mode: str = "proportion") -> pd.DataFrame:
         """
-        Apply Z-normalization (standardization) to numeric columns only.
-        Non-numeric columns are preserved.
+        Compute rolling mean for numeric columns in the DataFrame.
+
+        Args:
+            df: input dataframe (must contain columns known to this FeatureGenerator).
+            window: integer window size (number of rows) for rolling.
+            include_binary: if False (default) binary columns are excluded.
+                            if True and binary_mode == "proportion", rolling mean of binary columns
+                            will be computed (interpreted as fraction of 1s in the window).
+            binary_mode: currently only "proportion" supported when include_binary=True.
+        Returns:
+            DataFrame with non-numeric columns preserved and rolling aggregates for numeric columns.
         """
-        # It assumes self.stats['mean'] and self.stats['std'] are aligned with numeric_cols
-        df_numeric = (df[self.numeric_cols] - self.stats['mean'][self.numeric_cols]) / self.stats['std'][self.numeric_cols]
-        result = pd.concat([self.non_numeric, df_numeric], axis=1)
+        # Ensure metadata exists
+        if self.numeric_cols is None:
+            # fallback: detect numeric columns on the provided df
+            numeric_cols_all = df.select_dtypes(include=[np.number]).columns.tolist()
+        else:
+            numeric_cols_all = list(self.numeric_cols) + list(self.binary_cols)  # all numeric we know about
+
+        # Determine which numeric columns to roll
+        if include_binary:
+            cols_to_roll = [c for c in numeric_cols_all if c in df.columns]
+        else:
+            # only continuous numeric columns (exclude binary)
+            continuous_cols = [c for c in (self.numeric_cols or []) if c in df.columns]
+            cols_to_roll = continuous_cols
+
+        # If there are no columns to roll, return original df
+        if len(cols_to_roll) == 0:
+            return df.copy()
+
+        # Perform rolling on selected columns (preserve index & non-numeric columns)
+        rolled = df[cols_to_roll].rolling(window=window, min_periods=1).mean()
+
+        # If binary columns were requested but user wants a different mode in the future, handle here
+        # (currently proportion is same as mean for binary 0/1)
+        # Reassemble: keep non-numeric and columns not rolled (e.g., if binary excluded)
+        other_cols = [c for c in df.columns if c not in cols_to_roll]
+        result = pd.concat([df[other_cols].reset_index(drop=True), rolled.reset_index(drop=True)], axis=1)
+
+        # Reorder to original columns: put the rolled columns back in their original positions
+        # If some rolled columns replaced original ones, we keep result columns in the same order as df.columns
+        # For new column values (rolled) we overwrite original numeric columns
+        result = result[df.columns.intersection(result.columns).tolist()]  # ensure order & subset
+
+        # For safety, if any columns are missing (shouldn't happen), append them from original df
+        for c in df.columns:
+            if c not in result.columns:
+                result[c] = df[c].values
+
         return result[df.columns]
 
-    def normalize_min_max(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply Min-Max normalization to the DataFrame."""
-        df_numeric = (df[self.numeric_cols] - self.stats['min'][self.numeric_cols]) / (self.stats['max'][self.numeric_cols] - self.stats['min'][self.numeric_cols])
-        result = pd.concat([self.non_numeric, df_numeric], axis=1)
+    def rolling_mean_time_based(self, df: pd.DataFrame, window: str, include_binary: bool = False, binary_mode: str = "proportion") -> pd.DataFrame:
+        """
+        Compute rolling mean for numeric columns in the DataFrame using a time-based window.
+
+        Args:
+            df: input dataframe (must contain a 'time' column or index)
+            window: pandas offset alias or duration string, e.g., '24H', '7D'
+            include_binary: if False (default) binary columns are excluded.
+            binary_mode: currently only "proportion" supported when include_binary=True.
+
+        Returns:
+            DataFrame with an explicit 'time' column reset and rolling aggregates for numeric columns.
+        """
+        # Ensure 'time' exists
+        if 'time' not in df.columns and not isinstance(df.index, pd.DatetimeIndex):
+            raise ValueError("DataFrame must have a 'time' column or a DatetimeIndex for time-based rolling.")
+
+        # Set index to time if not already
+        df_time = df.set_index('time') if 'time' in df.columns else df.copy()
+        if not isinstance(df_time.index, pd.DatetimeIndex):
+            df_time.index = pd.to_datetime(df_time.index)
+
+        # Compose list of columns to roll (same logic as in rolling_mean)
+        if self.numeric_cols is None:
+            numeric_cols_all = df_time.select_dtypes(include=[np.number]).columns.tolist()
+        else:
+            numeric_cols_all = list(self.numeric_cols) + list(self.binary_cols)
+
+        if include_binary:
+            cols_to_roll = [c for c in numeric_cols_all if c in df_time.columns]
+        else:
+            continuous_cols = [c for c in (self.numeric_cols or []) if c in df_time.columns]
+            cols_to_roll = continuous_cols
+
+        if len(cols_to_roll) == 0:
+            # nothing to roll: return reset index frame
+            return df_time.reset_index()
+
+        rolled = df_time[cols_to_roll].rolling(window=window, min_periods=1).mean()
+
+        # Reassemble with non-rolled columns preserved
+        other_cols = [c for c in df_time.columns if c not in cols_to_roll]
+        result = pd.concat([df_time[other_cols].reset_index(drop=True), rolled.reset_index(drop=True)], axis=1)
+
+        # Try to keep original column order
+        result = result[df_time.reset_index().columns.intersection(result.columns).tolist()]
+
+        # Re-add time column if it was index
+        if 'time' not in result.columns and isinstance(df_time.index, pd.DatetimeIndex):
+            result.insert(0, 'time', df_time.index.to_series().reset_index(drop=True))
+
+        # Fill any missing original columns (safety)
+        for c in df.reset_index().columns if 'time' in df.columns else df.columns:
+            if c not in result.columns:
+                result[c] = df[c].values
+
         return result[df.columns]
 
-    def normalize_negone_one(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Normalize DataFrame values to the range [-1, 1]."""
-        df_numeric = 2 * (df[self.numeric_cols] - self.stats['min'][self.numeric_cols]) / (self.stats['max'][self.numeric_cols]- self.stats['min'][self.numeric_cols]) - 1
-        result = pd.concat([self.non_numeric, df_numeric], axis=1)
-        return result[df.columns]
+    def train_val_test_split(self, train_ratio=0.7, val_ratio=0.15):
+        """
+        Perform a chronological train-val-test split.
+        The remaining portion is used as test.
+        """
+        if self.dataframe is None:
+            raise ValueError("Data must be loaded or features created before splitting.")
 
-    def normalize_zero_one(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Normalize DataFrame values to the range [0, 1]. Same as min-max normalization."""
-        return self.normalize_min_max(df)
+        df = self.dataframe.sort_values("time")
+
+        n = len(df)
+        train_end = int(n * train_ratio)
+        val_end = int(n * (train_ratio + val_ratio))
+
+        df_train = df.iloc[:train_end]
+        df_val = df.iloc[train_end:val_end]
+        df_test = df.iloc[val_end:]
+
+        return df_train, df_val, df_test
+
+    def fit_normalization(self, df_train):
+        """
+        Fit normalization parameters (mean, std, min, max) using only the training data.
+        Detects binary columns automatically.
+        """
+        numeric = df_train.select_dtypes(include=[np.number])
+
+        # Detect binary columns
+        self.binary_cols = self.detect_binary_columns(df_train)
+
+        # Continuous numeric columns = numeric - binary
+        self.numeric_cols = [c for c in numeric.columns if c not in self.binary_cols]
+
+        # Save non-numeric columns (strings/dates, etc.)
+        self.non_numeric_cols = df_train.drop(columns=numeric.columns).columns.tolist()
+
+        # Stats only for continuous features
+        if len(self.numeric_cols) > 0:
+            self.stats = self.get_column_stats(df_train[self.numeric_cols])
+        else:
+            self.stats = None
+
+    def transform(self, df, method="z"):
+        """
+        Apply a chosen normalization method. Binary columns remain untouched.
+        """
+        if self.stats is None:
+            raise ValueError("Normalization has not been fitted yet (call fit_normalization first).")
+
+        df_cont = df[self.numeric_cols] if self.numeric_cols else pd.DataFrame(index=df.index)
+        df_bin = df[self.binary_cols] if self.binary_cols else pd.DataFrame(index=df.index)
+        df_non = df[self.non_numeric_cols] if self.non_numeric_cols else pd.DataFrame(index=df.index)
+
+        if not df_cont.empty:
+            if method == "z":
+                df_cont_norm = (df_cont - self.stats["mean"]) / self.stats["std"]
+            elif method == "minmax":
+                df_cont_norm = (df_cont - self.stats["min"]) / (self.stats["max"] - self.stats["min"])
+            elif method == "zeroone":
+                df_cont_norm = (df_cont - self.stats["min"]) / (self.stats["max"] - self.stats["min"])
+            elif method == "negoneone":
+                df_cont_norm = 2 * (df_cont - self.stats["min"]) / (self.stats["max"] - self.stats["min"]) - 1
+            else:
+                raise ValueError(f"Unknown normalization method: {method}")
+        else:
+            df_cont_norm = pd.DataFrame(index=df.index)
+
+        # Reassemble all columns in original order
+        df_out = pd.concat([df_non, df_bin, df_cont_norm], axis=1)
+        return df_out[df.columns]
 
 
 if __name__ == "__main__":
@@ -134,6 +280,9 @@ if __name__ == "__main__":
     #                                     channel=c, channel_first=False,
     #                                     title=f"{channels[c]}Over Time", xlabel="Time", ylabel="")
 
-    feature_gen.visualize_multiple_channels(feature_gen.normalize_min_max(feature_gen.dataframe),
+    #feature_gen.visualize_multiple_channels(feature_gen.normalize_min_max(feature_gen.dataframe),
+    #                                        channels=[1,7,21], channel_first=False,
+    #                                        title="", xlabel="Time", ylabel="")
+    feature_gen.visualize_multiple_channels(feature_gen.rolling_mean(feature_gen.dataframe, window=100),
                                             channels=[1,7,21], channel_first=False,
                                             title="", xlabel="Time", ylabel="")
