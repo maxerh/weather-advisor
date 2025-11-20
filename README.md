@@ -8,23 +8,24 @@ This is a side project for weather forecasting with different tools.
 1. Data exploration
    - [x] identify features: temperature, humidity, pressure, wind, wind direction 
    - [x] get historical data and store locally for training
-   - [ ] data visualizations
+   - [x] data visualizations
    - [x] clean and format data
    - [ ] feature engineering: find/calculate other features 
-     - [ ] values at t-1,...
-     - [ ] rolling mean and std values
+     - [x] values at t-1,...
+     - [x] rolling mean and std values
      - [ ] seasons
 2. Create dataset
-    - [ ] Length of historic data / length of forecasting data?
-    - [ ] Training/validation/test splits
+    - [x] Length of historic data / length of forecasting data?
+    - [x] Training/validation/test splits
 3. Create forecasting models
    - [ ] Prophet
    - [ ] ARIMA
    - [ ] RandomForest
-   - [ ] simple LSTM
+   - [x] simple LSTM
+   - [x] simple Transformer
    - [ ] Transformer architectures (FEDformer,...)
 4. Model training and evaluation
-   - [ ] training pipeline
+   - [x] training pipeline
    - [ ] evaluation pipeline
      - [ ] include metrics (MAE/MSE) 
      - [ ] measure inference times
