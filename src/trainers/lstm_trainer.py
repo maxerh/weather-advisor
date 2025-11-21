@@ -10,7 +10,7 @@ class LSTMTrainer(BaseTrainer):
         self.pred_len = pred_len
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
-        super().__init__(model_name="LSTM", **kwargs)
+        super().__init__(model_name="lstm", **kwargs)
 
     def build_model(self):
         return LSTMForecastModel(

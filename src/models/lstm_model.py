@@ -10,7 +10,7 @@ class LSTMForecastModel(nn.Module):
         y: (batch, prediction_length, output_dim)
     """
 
-    def __init__(self, input_dim, hidden_dim, num_layers, prediction_length, output_dim):
+    def __init__(self, input_dim, hidden_dim, num_layers, prediction_length, output_dim, *args, **kwargs):
         super().__init__()
 
         self.pred_len = prediction_length

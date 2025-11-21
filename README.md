@@ -27,8 +27,9 @@ This is a side project for weather forecasting with different tools.
 4. Model training and evaluation
    - [x] training pipeline
    - [ ] evaluation pipeline
-     - [ ] include metrics (MAE/MSE) 
-     - [ ] measure inference times
+     - [x] include metrics (MAE/MSE)
+     - [ ] time measurements
+   - [ ] inference pipeline
    - [ ] include model versioning
 5. Deploy the forecasting system for real-time predictions
    - [ ] serve model via API
@@ -56,5 +57,15 @@ Setup the virtual environment
 python -m venv venv
 pip install -r requirements.txt
 ```
+## Start
+
+Run training and evaluation. Best trained models will be saved as .pt-files
+
+```shell
+source venv/bin activate
+python main.py --mode train --model deetransformer
+python main.py --mode eval --model deetransformer
+```
+
 
 

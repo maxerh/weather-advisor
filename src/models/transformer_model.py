@@ -11,10 +11,11 @@ class TransformerForecastModel(nn.Module):
         input_dim,
         embed_dim,
         num_heads,
-        hidden_dim,
+        ff_dim,
         num_layers,
         prediction_length,
-        output_dim
+        output_dim,
+        *args, **kwargs
     ):
         super().__init__()
 
@@ -27,7 +28,7 @@ class TransformerForecastModel(nn.Module):
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=embed_dim,
             nhead=num_heads,
-            dim_feedforward=hidden_dim,
+            dim_feedforward=ff_dim,
             batch_first=True
         )
 

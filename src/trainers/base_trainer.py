@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 
+
 class BaseTrainer(ABC):
     """
     Abstract Base Trainer class providing:
@@ -43,14 +44,27 @@ class BaseTrainer(ABC):
         self.patience = patience
         self.save_dir = Path(save_dir)
 
-        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.device = torch.device("cpu")
 
         self.model = self.build_model().to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
         self.best_val_loss = float("inf")
         self.early_stopping_counter = 0
+
+        if not hasattr(self, 'input_length'):
+            self.input_length = None
+        if not hasattr(self, 'hidden_dim'):
+            self.hidden_dim = None
+        if not hasattr(self, 'num_layers'):
+            self.num_layers = None
+        if not hasattr(self, 'embed_dim'):
+            self.embed_dim = None
+        if not hasattr(self, 'num_heads'):
+            self.num_heads = None
+        if not hasattr(self, 'ff_dim'):
+            self.ff_dim = None
 
         # MLflow init
         mlflow.set_experiment(mlflow_experiment)
@@ -159,5 +173,17 @@ class BaseTrainer(ABC):
     def save_model(self):
         self.save_dir.mkdir(parents=True, exist_ok=True)
         model_path = self.save_dir / f"{self.model_name}.pt"
-        torch.save(self.model.state_dict(), model_path)
+        #torch.save(self.model.state_dict(), model_path)
+        torch.save({
+            'model_state_dict': self.model.state_dict(),
+            'input_dim': self.input_dim,
+            'input_length': self.input_length,
+            'output_dim': self.output_dim,
+            'pred_len': self.pred_len,
+            'hidden_dim': self.hidden_dim,
+            'num_layers': self.num_layers,
+            'embed_dim' : self.embed_dim,
+            'num_heads' : self.num_heads,
+            'ff_dim' : self.ff_dim,
+        }, model_path)
         print(f"Saved best model → {model_path}")

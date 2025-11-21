@@ -30,26 +30,31 @@ class WindowedDataset(Dataset):
 
         # Convert to numpy
         if hasattr(data, "values"):  # pandas DataFrame
+            self.column_names = data.columns.tolist()[1:]
             data = data.values
+        else:
+            self.column_names = range(data.shape[1] - 1)
 
         self.data = np.asarray(data[:,1:], dtype=np.float32)
         self.timestamps = data[:, 0]  # assuming first row is timestamps or headers
 
         self.input_length = input_length
-        self.pred_length = prediction_length
+        self.pred_len = prediction_length
 
         # Determine target columns (default: all columns)
         if target_cols is None:
             self.target_cols = list(range(self.data.shape[1]))
         else:
-            self.target_cols = target_cols
+            self.target_cols = [
+                self.column_names.index(col) if isinstance(col, str) else col for col in target_cols
+            ]
 
-        self.num_samples = len(self.data) - self.input_length - self.pred_length
+        self.num_samples = len(self.data) - self.input_length - self.pred_len
 
         if self.num_samples <= 0:
             raise ValueError(
                 f"Not enough data points ({len(self.data)}) for "
-                f"input_length={input_length} and pred_length={prediction_length}."
+                f"{input_length=} and {prediction_length=}."
             )
 
     def __len__(self):
@@ -65,7 +70,7 @@ class WindowedDataset(Dataset):
         end_x = idx + self.input_length
 
         start_y = end_x
-        end_y = end_x + self.pred_length
+        end_y = end_x + self.pred_len
 
         X = self.data[start_x:end_x]  # (input_length, num_features)
         Y = self.data[start_y:end_y][:, self.target_cols]  # (pred_len, num_target_features)
