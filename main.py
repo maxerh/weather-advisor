@@ -82,6 +82,26 @@ def get_trainer(dl_train, dl_val, dl_test, input_length, prediction_length, epoc
             epochs=epochs,
             learning_rate=5e-5,
         )
+    elif args.model == 'autoformer':
+        from src.trainers.autoformer_trainer import AutoformerTrainer
+        trainer = AutoformerTrainer(
+            input_dim=dl_train.dataset.data.shape[1],
+            output_dim=len(dl_train.dataset.target_cols),
+            input_length=input_length,
+            pred_length=prediction_length,
+            d_model=128,
+            n_heads=8,
+            ff_dim=256,
+            num_layers=3,
+            kernel_size=25,
+            top_k=5,
+            dropout=0.1,
+            train_dataloader=dl_train,
+            val_dataloader=dl_val,
+            test_dataloader=dl_test,
+            epochs=epochs,
+            learning_rate=5e-5,
+        )
     else:
         raise ValueError("Invalid model selected. Choose from [lstm, transformer].")
     return trainer
@@ -138,9 +158,9 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str,
-                        help='Train, evaluation or test mode [train,eval,test]', default='eval')
+                        help='Train, evaluation or test mode [train,eval,test]', default='train')
     parser.add_argument('--model', type=str,
-                        help='Which model to use [lstm, transformer, deeptransformer]', default='deeptransformer')
+                        help='Which model to use [lstm, transformer, deeptransformer, autoformer]', default='autoformer')
 
     args = parser.parse_args()
     main(args)
