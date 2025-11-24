@@ -204,7 +204,7 @@ class Autoformer(nn.Module):
         input_dim: int,
         output_dim: int,
         input_length: int,
-        pred_length: int,
+        pred_len: int,
         d_model: int = 128,
         n_encoder_layers: int = 3,
         n_decoder_layers: int = 2,
@@ -216,7 +216,7 @@ class Autoformer(nn.Module):
     ):
         super().__init__()
         self.input_length = input_length
-        self.pred_length = pred_length
+        self.pred_len = pred_len
 
         self.input_proj = nn.Linear(input_dim, d_model)
         self.output_proj = nn.Linear(d_model, output_dim)
@@ -229,7 +229,7 @@ class Autoformer(nn.Module):
         ])
 
         # decoder "start token": learnable parameter
-        self.start_token = nn.Parameter(torch.zeros(1, pred_length, d_model))
+        self.start_token = nn.Parameter(torch.zeros(1, pred_len, d_model))
 
     def forward(self, x):
         """

@@ -10,7 +10,7 @@ class AutoformerTrainer(BaseTrainer):
         input_dim,
         output_dim,
         input_length,
-        pred_length,
+        pred_len,
         d_model=128,
         n_heads=8,
         ff_dim=256,
@@ -23,7 +23,7 @@ class AutoformerTrainer(BaseTrainer):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.input_length = input_length
-        self.pred_length = pred_length
+        self.pred_len = pred_len
         self.d_model = d_model
         self.n_heads = n_heads
         self.ff_dim = ff_dim
@@ -39,7 +39,7 @@ class AutoformerTrainer(BaseTrainer):
             input_dim=self.input_dim,
             output_dim=self.output_dim,
             input_length=self.input_length,
-            pred_length=self.pred_length,
+            pred_len=self.pred_len,
             d_model=self.d_model,
             n_heads=self.n_heads,
             ff_dim=self.ff_dim,
@@ -49,9 +49,6 @@ class AutoformerTrainer(BaseTrainer):
         )
 
     def predict_step(self, inputs):
-        # here, decoder input = zeros
-        B = inputs.size(0)
-        zeros = torch.zeros((B, self.pred_length, self.input_dim), device=inputs.device)
         return self.model(inputs)
 
     def compute_loss(self, outputs, targets):

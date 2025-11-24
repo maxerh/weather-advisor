@@ -88,7 +88,7 @@ def get_trainer(dl_train, dl_val, dl_test, input_length, prediction_length, epoc
             input_dim=dl_train.dataset.data.shape[1],
             output_dim=len(dl_train.dataset.target_cols),
             input_length=input_length,
-            pred_length=prediction_length,
+            pred_len=prediction_length,
             d_model=128,
             n_heads=8,
             ff_dim=256,
