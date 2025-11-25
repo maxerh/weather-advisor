@@ -22,8 +22,11 @@ This is a side project for weather forecasting with different tools.
    - [ ] ARIMA
    - [ ] RandomForest
    - [x] simple LSTM
-   - [x] simple Transformer
    - [ ] Transformer architectures (FEDformer,...)
+     - [x] simple Transformer
+     - [x] Deep Transformer
+     - [x] Autoformer
+     - [ ] FEDformer
 4. Model training and evaluation
    - [x] training pipeline
    - [ ] evaluation pipeline
