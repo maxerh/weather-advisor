@@ -92,7 +92,6 @@ def get_trainer(dl_train, dl_val, dl_test, input_length, prediction_length, epoc
             d_model=128,
             n_heads=8,
             ff_dim=256,
-            num_layers=3,
             kernel_size=25,
             top_k=5,
             dropout=0.1,
@@ -100,7 +99,7 @@ def get_trainer(dl_train, dl_val, dl_test, input_length, prediction_length, epoc
             val_dataloader=dl_val,
             test_dataloader=dl_test,
             epochs=epochs,
-            learning_rate=5e-5,
+            learning_rate=1e-5,
         )
     else:
         raise ValueError("Invalid model selected. Choose from [lstm, transformer].")
@@ -126,15 +125,20 @@ def get_evaluator(dl_val, model_name):
             model_name=model_name,
             dataloader=dl_val,
         )
+    elif model_name == 'autoformer':
+        from src.evaluators.autoformer_evaluator import AutoformerEvaluator
+        evaluator = AutoformerEvaluator(
+            model_name=model_name,
+            dataloader=dl_val,
+        )
     else:
         raise ValueError("Invalid model selected. Choose from [lstm, transformer, deeptransformer].")
     return evaluator
 
 def main(args):
-
     input_length = 168      # past 7 days
     prediction_length = 24  # next day
-    epochs = 25
+    epochs = 50
     dl_train, dl_val, dl_test = get_dataloader("data/history/munich_weather_2015_2024.csv",
                                                 batch_size=32,
                                                 input_length=input_length,
