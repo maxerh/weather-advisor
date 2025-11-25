@@ -164,6 +164,14 @@ def get_evaluator(dl_val, model_name):
             model_name=model_name,
             dataloader=dl_val,
         )
+    elif model_name == 'prophet':
+        # TODO pass trainer and val dataframe or load trainer in evaluator?
+        from src.evaluators.prophet_evaluator import ProphetEvaluator
+        evaluator = ProphetEvaluator(
+            model_name=model_name,
+            ds_val=df_val["time"],
+            y_val=df_val[target_cols[0]]
+        )
     else:
         raise ValueError("Invalid model selected. Choose from [lstm, transformer, deeptransformer].")
     return evaluator
