@@ -35,6 +35,7 @@ def get_dataloader(path_to_dataset, batch_size=32, input_length=168, prediction_
 
     return train_loader, val_loader, test_loader, fg, df_train, df_val, df_test
 
+
 def get_trainer(dl_train, dl_val, dl_test, fg, df_train, df_val, input_length, prediction_length, epochs, args):
     # For deep models:
     if args.model == 'lstm':
@@ -118,6 +119,7 @@ def get_trainer(dl_train, dl_val, dl_test, fg, df_train, df_val, input_length, p
 
         # Split according to train/val proportions
         # Use the same indices from df_train / df_val
+        # We'll use df_train and df_val passed in
         ds_train = df_train["time"]
         y_train = df_train[target]
         ds_val = df_val["time"]

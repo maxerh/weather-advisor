@@ -27,12 +27,11 @@ class AutoformerTrainer(BaseTrainer):
         self.d_model = d_model
         self.n_heads = n_heads
         self.ff_dim = ff_dim
-        self.num_layers = num_layers
         self.kernel_size = kernel_size
         self.top_k = top_k
         self.dropout = dropout
 
-        super().__init__(model_name="Autoformer", **kwargs)
+        super().__init__(model_name="autoformer", **kwargs)
 
     def build_model(self):
         return Autoformer(
