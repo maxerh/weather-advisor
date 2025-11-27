@@ -164,14 +164,20 @@ def get_evaluator(dl_val, model_name):
             model_name=model_name,
             dataloader=dl_val,
         )
+    elif model_name == 'autoformer':
+        from src.evaluators.autoformer_evaluator import AutoformerEvaluator
+        evaluator = AutoformerEvaluator(
+            model_name=model_name,
+            dataloader=dl_val,
+        )
     elif model_name == 'prophet':
         # TODO pass trainer and val dataframe or load trainer in evaluator?
         from src.evaluators.prophet_evaluator import ProphetEvaluator
-        evaluator = ProphetEvaluator(
-            model_name=model_name,
-            ds_val=df_val["time"],
-            y_val=df_val[target_cols[0]]
-        )
+        #evaluator = ProphetEvaluator(
+        #    model_name=model_name,
+        #    ds_val=df_val["time"],
+        #    y_val=df_val[target_cols[0]]
+        #)
     else:
         raise ValueError("Invalid model selected. Choose from [lstm, transformer, deeptransformer].")
     return evaluator
@@ -223,7 +229,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str,
-                        help='Train, evaluation or test mode [train,eval,test]', default='train')
+                        help='Train, evaluation or test mode [train,eval,test]', default='eval')
     parser.add_argument('--model', type=str,
                         help='Which model to use [lstm, transformer, deeptransformer, autoformer]', default='autoformer')
 
