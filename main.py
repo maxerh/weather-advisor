@@ -145,7 +145,7 @@ def get_trainer(dl_train, dl_val, dl_test, fg, df_train, df_val, input_length, p
     return trainer
 
 
-def get_evaluator(dl_val, model_name, df_val, target_cols=None):
+def get_evaluator(dl_val, model_name):
     if model_name == 'lstm':
         from src.evaluators.lstm_evaluator import LSTMEvaluator
         evaluator = LSTMEvaluator(
@@ -161,6 +161,12 @@ def get_evaluator(dl_val, model_name, df_val, target_cols=None):
     elif model_name == 'deeptransformer':
         from src.evaluators.deep_transformer_evaluator import DeepTransformerEvaluator
         evaluator = DeepTransformerEvaluator(
+            model_name=model_name,
+            dataloader=dl_val,
+        )
+    elif model_name == 'autoformer':
+        from src.evaluators.autoformer_evaluator import AutoformerEvaluator
+        evaluator = AutoformerEvaluator(
             model_name=model_name,
             dataloader=dl_val,
         )
@@ -211,7 +217,8 @@ def main(args):
         else:
             trainer.train()
     elif args.mode == 'eval':
-        evaluator = get_evaluator(dl_val, args.model, df_val, target_cols)
+        print("Running in evaluation mode...")
+        evaluator = get_evaluator(dl_val, args.model)
         evaluator.evaluate()
     else:
         print("Invalid mode selected. Choose from [train, eval].")
