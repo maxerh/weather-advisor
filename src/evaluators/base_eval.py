@@ -34,6 +34,7 @@ class BaseEvaluator(ABC):
         self.checkpoint_path = Path(checkpoint_path+self.model_name+'.pt')
 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = 'cpu'
 
         # MLflow settings
         mlflow.set_experiment(mlflow_experiment)

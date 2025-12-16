@@ -25,9 +25,9 @@ class BaseTrainer(ABC):
     def __init__(
             self,
             model_name: str,
-            train_dataloader,
-            val_dataloader,
-            test_dataloader,
+            train_loader,
+            val_loader,
+            test_loader,
             learning_rate: float = 1e-3,
             epochs: int = 20,
             patience: int = 5,
@@ -35,17 +35,17 @@ class BaseTrainer(ABC):
             mlflow_experiment: str = "weather_forecasting",
     ):
         self.model_name = model_name
-        self.train_loader = train_dataloader
-        self.val_loader = val_dataloader
-        self.test_loader = test_dataloader
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.test_loader = test_loader
 
         self.learning_rate = learning_rate
         self.epochs = epochs
         self.patience = patience
         self.save_dir = Path(save_dir)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        #self.device = torch.device("cpu")
+        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu")
 
         self.model = self.build_model().to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)

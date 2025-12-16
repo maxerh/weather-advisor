@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import mlflow
+import matplotlib.pyplot as plt
 import pickle
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from src.evaluators.base_eval import BaseEvaluator
@@ -36,4 +37,30 @@ class ProphetEvaluator:
 
         print(f"Prophet evaluation → MSE: {mse:.4f}, MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
+        if visualize:
+            self.visualize_forecast(merged["y_true"], merged["yhat"])
+
         return {"mse": mse, "mae": mae, "rmse": rmse}
+
+    # ---------------------------------------------------------
+    # Visualization
+    # ---------------------------------------------------------
+
+    def visualize_forecast(self, y_true, y_pred):
+        """
+        Plots:
+            - historical inputs
+            - true future targets
+            - predicted future values
+
+        Args:
+            idx: sample index to visualize
+        """
+
+        plt.figure(figsize=(12, 5))
+        plt.plot(y_true, label="True")
+        plt.plot(y_pred, label="Predicted")
+        plt.title(f"Forecast Visualization — {self.model_name}")
+        plt.grid()
+        plt.legend()
+        plt.show()
