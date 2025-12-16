@@ -210,7 +210,8 @@ __marimo__/
 data/
 mlruns/
 trained_models/
+artifacts/
 
-.csv
-.np
-.pkl
+*.csv
+*.np
+*.pkl

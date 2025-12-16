@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 import pandas as pd
 
@@ -23,6 +24,15 @@ class FeatureGenerator(Visualizer):
 
         if self.stats is None:
             self.stats = self.get_column_stats(self.dataframe.select_dtypes(include=[np.number]))
+
+    def save(self, path: str):
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(path: str):
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
     def create_features(self):
         """

@@ -10,6 +10,7 @@ def get_dataloader(path_to_dataset, batch_size=32, input_length=168, prediction_
     # 1. Create features
     fg = FeatureGenerator(path_to_dataset)
     fg.create_features()
+    fg.save("artifacts/feature_generator.pkl")
 
     # 2. Split
     df_train, df_val, df_test = fg.train_val_test_split()
