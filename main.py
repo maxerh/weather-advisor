@@ -113,7 +113,7 @@ def get_trainer(dl_train, dl_val, dl_test, fg, df_train, df_val, input_length, p
         # We extract the ds (time) and y (target) from raw dataframe
         # Use the FeatureGenerator data (before normalization) or df_train
         # Assuming target_cols has exactly one column
-        target = args.target_cols[0]
+        target = dl_train.dataset.target_cols_names[0]
         ds_series = fg.dataframe["time"]
         y_series = fg.dataframe[target]
 
@@ -145,7 +145,7 @@ def get_trainer(dl_train, dl_val, dl_test, fg, df_train, df_val, input_length, p
     return trainer
 
 
-def get_evaluator(dl_val, model_name):
+def get_evaluator(dl_val, model_name, df_val, target_cols=None):
     if model_name == 'lstm':
         from src.evaluators.lstm_evaluator import LSTMEvaluator
         evaluator = LSTMEvaluator(
@@ -165,7 +165,6 @@ def get_evaluator(dl_val, model_name):
             dataloader=dl_val,
         )
     elif model_name == 'prophet':
-        # TODO pass trainer and val dataframe or load trainer in evaluator?
         from src.evaluators.prophet_evaluator import ProphetEvaluator
         evaluator = ProphetEvaluator(
             model_name=model_name,
@@ -178,6 +177,8 @@ def get_evaluator(dl_val, model_name):
 
 
 def main(args):
+    print(f"Running in ~~{args.mode}~~ mode with model ~~{args.model}~~")
+
     input_length = 168      # past 7 days
     prediction_length = 24  # next day
     epochs = 25
@@ -194,7 +195,6 @@ def main(args):
     )
 
     if args.mode == 'train':
-        print("Running in training mode...")
 
         trainer = get_trainer(
             dl_train, dl_val, dl_test,
@@ -211,21 +211,17 @@ def main(args):
         else:
             trainer.train()
     elif args.mode == 'eval':
-        print("Running in evaluation mode...")
-        evaluator = get_evaluator(dl_val, args.model)
+        evaluator = get_evaluator(dl_val, args.model, df_val, target_cols)
         evaluator.evaluate()
-    elif args.mode == 'test':
-        print("Running in test mode...")
-        # Add testing logic here
     else:
-        print("Invalid mode selected. Choose from [train, eval, test].")
+        print("Invalid mode selected. Choose from [train, eval].")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str,
-                        help='Train, evaluation or test mode [train,eval,test]', default='train')
+                        help='Train, evaluation or test mode [train,eval]', default='eval')
     parser.add_argument('--model', type=str,
-                        help='Which model to use [lstm, transformer, deeptransformer, autoformer]', default='autoformer')
+                        help='Which model to use [lstm, transformer, deeptransformer, autoformer, prophet]', default='prophet')
 
     args = parser.parse_args()
     main(args)

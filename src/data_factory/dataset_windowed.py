@@ -48,7 +48,7 @@ class WindowedDataset(Dataset):
             self.target_cols = [
                 self.column_names.index(col) if isinstance(col, str) else col for col in target_cols
             ]
-
+        self.target_cols_names = target_cols
         self.num_samples = len(self.data) - self.input_length - self.pred_len
 
         if self.num_samples <= 0:

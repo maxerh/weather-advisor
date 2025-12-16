@@ -6,3 +6,4 @@ fastapi
 mlflow
 requests
 prophet
+plotly

@@ -1,4 +1,5 @@
 import mlflow
+import pickle
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error, mean_absolute_error
@@ -24,11 +25,14 @@ class ProphetTrainer:
         self.prophet = ProphetWrapper(**(prophet_kwargs or {}))
         self.history = None
         self.forecast = None
+        mlflow.set_experiment("weather_forecasting")
 
     def train(self):
         df_train = pd.DataFrame({"ds": self.ds, "y": self.y})
         self.prophet.fit(df_train)
         self.history = df_train
+        with open("trained_models/prophet.pkl", "wb") as f:
+            pickle.dump(self.prophet, f)
 
     def predict(self, periods: int):
         self.forecast = self.prophet.predict(periods, freq=self.freq)
@@ -58,7 +62,7 @@ class ProphetTrainer:
         # Compute metrics
         mse = mean_squared_error(merged["y_true"], merged["yhat"])
         mae = mean_absolute_error(merged["y_true"], merged["yhat"])
-        rmse = np.sqrt(mse)
+        rmse = float(np.sqrt(mse))
 
         # Log with MLflow
         mlflow.log_param("model_type", "Prophet")
