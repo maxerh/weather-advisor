@@ -145,7 +145,7 @@ def get_trainer(dl_train, dl_val, dl_test, fg, df_train, df_val, input_length, p
     return trainer
 
 
-def get_evaluator(dl_val, model_name):
+def get_evaluator(dl_val, model_name, df_val, target_cols=None):
     if model_name == 'lstm':
         from src.evaluators.lstm_evaluator import LSTMEvaluator
         evaluator = LSTMEvaluator(
@@ -218,7 +218,7 @@ def main(args):
             trainer.train()
     elif args.mode == 'eval':
         print("Running in evaluation mode...")
-        evaluator = get_evaluator(dl_val, args.model)
+        evaluator = get_evaluator(dl_val, args.model, df_val, target_cols)
         evaluator.evaluate()
     else:
         print("Invalid mode selected. Choose from [train, eval].")
