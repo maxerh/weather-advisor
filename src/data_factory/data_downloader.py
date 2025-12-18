@@ -50,16 +50,16 @@ def download_historical_weather(
 
     # Extract time-series into DataFrame
     df_hourly = pd.DataFrame(data["hourly"])
-    df_daily = pd.DataFrame(data["daily"])
-
-    # Combine if needed (example: hourly + daily join)
-
     df_hourly['time'] = pd.to_datetime(df_hourly['time'])
-    df_daily['time'] = pd.to_datetime(df_daily['time'])
     df_hourly['date'] = df_hourly['time'].dt.date
-    df_daily['date'] = df_daily['time'].dt.date
-    df_merged = df_hourly.merge(df_daily, on='date', how='left', suffixes=('', '_daily'))
-    df_merged = df_merged.drop(['date','time_daily'], axis=1)
+    if daily_vars:
+        df_daily = pd.DataFrame(data["daily"])
+        df_daily['time'] = pd.to_datetime(df_daily['time'])
+        df_daily['date'] = df_daily['time'].dt.date
+        df_merged = df_hourly.merge(df_daily, on='date', how='left', suffixes=('', '_daily'))
+        df_merged = df_merged.drop(['date','time_daily'], axis=1)
+    else:
+        df_merged = df_hourly.drop(['date'], axis=1)
 
     # Export to CSV
     data_name = project_root / "data" / "history" / output_csv
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         end_date="2024-12-31",
         hourly_vars=["temperature_2m","relative_humidity_2m","dew_point_2m","wind_speed_10m","wind_direction_10m",
                      "surface_pressure","rain","precipitation", "cloudcover_low", "cloudcover_mid", "cloudcover_high"],
-        daily_vars=["temperature_2m_max","temperature_2m_min","precipitation_sum","sunrise", "sunset"],
+        #daily_vars=["temperature_2m_max","temperature_2m_min","precipitation_sum","sunrise", "sunset"],
         timezone="Europe/Berlin",
         output_csv="munich_weather_2015_2024.csv"
     )

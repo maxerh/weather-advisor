@@ -11,7 +11,8 @@ class FeatureGenerator(Visualizer):
         self.dataframe = None
         self.stats = None
         self.numeric_cols = None
-        self.non_numeric = None
+        self.non_numeric_cols = None
+        self.binary_cols = None
 
 
     def load_data(self):
@@ -45,17 +46,17 @@ class FeatureGenerator(Visualizer):
         self.dataframe['date'] = self.dataframe['time'].dt.date
 
         self.dataframe['hour_of_day'] = self.dataframe['time'].dt.hour
-        self.dataframe['sunrise'] = pd.to_datetime(self.dataframe['sunrise'])
-        self.dataframe['sunset'] = pd.to_datetime(self.dataframe['sunset'])
-        self.dataframe['minutes_since_sunrise'] = (self.dataframe['time'] - self.dataframe['sunrise']).dt.total_seconds() / 60
-        self.dataframe['minutes_until_sunset'] = (self.dataframe['sunset'] - self.dataframe['time']).dt.total_seconds() / 60
-        self.dataframe['is_daylight'] = (
-                    (self.dataframe['time'] >= self.dataframe['sunrise']) &
-                    (self.dataframe['time'] <= self.dataframe['sunset'])).astype(int)
+        #self.dataframe['sunrise'] = pd.to_datetime(self.dataframe['sunrise'])
+        #self.dataframe['sunset'] = pd.to_datetime(self.dataframe['sunset'])
+        #self.dataframe['minutes_since_sunrise'] = (self.dataframe['time'] - self.dataframe['sunrise']).dt.total_seconds() / 60
+        #self.dataframe['minutes_until_sunset'] = (self.dataframe['sunset'] - self.dataframe['time']).dt.total_seconds() / 60
+        #self.dataframe['is_daylight'] = (
+        #            (self.dataframe['time'] >= self.dataframe['sunrise']) &
+        #            (self.dataframe['time'] <= self.dataframe['sunset'])).astype(int)
 
         # Optionally clip negative values:
-        self.dataframe['minutes_since_sunrise'] = self.dataframe['minutes_since_sunrise'].clip(lower=0)
-        self.dataframe['minutes_until_sunset'] = self.dataframe['minutes_until_sunset'].clip(lower=0)
+        #self.dataframe['minutes_since_sunrise'] = self.dataframe['minutes_since_sunrise'].clip(lower=0)
+        #self.dataframe['minutes_until_sunset'] = self.dataframe['minutes_until_sunset'].clip(lower=0)
 
         # Add cyclical encoding for hour_of_day:
         self.dataframe['hour_sin'] = np.sin(2 * np.pi * self.dataframe['hour_of_day'] / 24)
@@ -65,9 +66,9 @@ class FeatureGenerator(Visualizer):
         wd_rad = np.deg2rad(self.dataframe['wind_direction_10m'])
         self.dataframe['wind_u'] = self.dataframe['wind_speed_10m'] * np.cos(wd_rad)
         self.dataframe['wind_v'] = self.dataframe['wind_speed_10m'] * np.sin(wd_rad)
-        #print(self.dataframe.head())
 
-        self.dataframe.drop(columns=['sunrise', 'sunset', 'date'], inplace=True)
+        #self.dataframe.drop(columns=['sunrise', 'sunset', 'date'], inplace=True)
+        self.dataframe.drop(columns=['date'], inplace=True)
         self.numeric_cols = self.dataframe.select_dtypes(include=np.number).columns
         self.non_numeric = self.dataframe.drop(columns=self.numeric_cols)
         self.stats = self.get_column_stats(self.dataframe.select_dtypes(include=[np.number]))
@@ -252,7 +253,8 @@ class FeatureGenerator(Visualizer):
         """
         if self.stats is None:
             raise ValueError("Normalization has not been fitted yet (call fit_normalization first).")
-
+        if type(self.numeric_cols) != list:
+            self.numeric_cols = self.numeric_cols.tolist()
         df_cont = df[self.numeric_cols] if self.numeric_cols else pd.DataFrame(index=df.index)
         df_bin = df[self.binary_cols] if self.binary_cols else pd.DataFrame(index=df.index)
         df_non = df[self.non_numeric_cols] if self.non_numeric_cols else pd.DataFrame(index=df.index)

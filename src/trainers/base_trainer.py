@@ -44,8 +44,8 @@ class BaseTrainer(ABC):
         self.patience = patience
         self.save_dir = Path(save_dir)
 
-        #self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.device = torch.device("cpu")
 
         self.model = self.build_model().to(self.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)

@@ -37,6 +37,7 @@ class DeepTransformerEvaluator(BaseEvaluator):
         return DeepTransformerForecastModel(**kwargs)
 
     def predict_step(self, inputs):
+        print(inputs.shape)
         return self.model(inputs)
 
     def compute_metrics(self, y_true, y_pred):

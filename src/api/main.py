@@ -23,7 +23,7 @@ INPUT_LENGTH = 168
 PREDICTION_LENGTH = 24
 
 FG_PATH = "artifacts/feature_generator.pkl"
-MODEL_PATH = "artifacts/deeptransformer.pt"
+MODEL_PATH = "trained_models/deeptransformer.pt"
 
 class ForecastResponse(BaseModel):
     forecast: list
@@ -45,8 +45,10 @@ async def lifespan(app: FastAPI):
     fg_tmp = deepcopy(fg_base)
     fg_tmp.dataframe = df_bootstrap
     fg_tmp.create_features()
-    df_feat = fg_tmp.transform(fg_tmp.dataframe)
 
+    time = fg_tmp.dataframe['time']
+    fg_tmp.dataframe = fg_tmp.dataframe.drop(columns=['time'])
+    df_feat = fg_tmp.transform(fg_tmp.dataframe)
     input_dim = df_feat.shape[1]
 
     # 3. Load model
@@ -84,6 +86,7 @@ def predict_now():
         model = app.state.model
 
         # 1. Fetch live data
+        print(1)
         df_live = fetch_live_weather(
             latitude=LATITUDE,
             longitude=LONGITUDE,
@@ -92,15 +95,27 @@ def predict_now():
         )
 
         # 2. Feature engineering
+        print(2)
         fg.dataframe = df_live
         fg.create_features()
+        time = fg.dataframe['time']
+        fg.dataframe = fg.dataframe.drop(columns=['time'])
         df_feat = fg.transform(fg.dataframe)
 
         # 3. Window
+        print(3)
         x = build_last_window(df_feat, INPUT_LENGTH)
+        print(x.shape)
+        print(x[0])
+        # count nan values in x
+        nan_count = (x != x).sum()
+        print(f"Number of NaN values in input window: {nan_count}")
+        # TODO: handle nan values properly before prediction
 
         # 4. Predict
+        print(4)
         y = model.predict(x)
+        print(y)
 
         return {"forecast": y.squeeze().tolist()}
 
@@ -115,5 +130,5 @@ def health():
     return {
         "status": "ok",
         "model_loaded": app.state.model is not None,
-        "num_features": len(app.state.fg.feature_cols),
+        "num_features": len(app.state.fg.dataframe.columns) if app.state.fg else 0,
     }

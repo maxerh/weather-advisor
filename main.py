@@ -229,7 +229,7 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str,
                         help='Train, evaluation or test mode [train,eval]', default='eval')
     parser.add_argument('--model', type=str,
-                        help='Which model to use [lstm, transformer, deeptransformer, autoformer, prophet]', default='prophet')
+                        help='Which model to use [lstm, transformer, deeptransformer, autoformer, prophet]', default='deeptransformer')
 
     args = parser.parse_args()
     main(args)
