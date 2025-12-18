@@ -18,7 +18,7 @@ This is a side project for weather forecasting with different tools.
     - [x] Length of historic data / length of forecasting data?
     - [x] Training/validation/test splits
 3. Create forecasting models
-   - [ ] Prophet
+   - [x] Prophet
    - [ ] ARIMA
    - [ ] RandomForest
    - [x] simple LSTM
@@ -29,14 +29,14 @@ This is a side project for weather forecasting with different tools.
      - [ ] FEDformer
 4. Model training and evaluation
    - [x] training pipeline
-   - [ ] evaluation pipeline
+   - [x] evaluation pipeline
      - [x] include metrics (MAE/MSE)
      - [ ] time measurements
-   - [ ] inference pipeline
+   - [x] inference pipeline
    - [ ] include model versioning
 5. Deploy the forecasting system for real-time predictions
-   - [ ] serve model via API
-   - [ ] real-time data pipeline
+   - [x] serve model via API
+   - [x] real-time data pipeline
    - [ ] dashboard
    - [ ] containerization
    - [ ] monitoring and logging
@@ -70,5 +70,8 @@ python main.py --mode train --model deetransformer
 python main.py --mode eval --model deetransformer
 ```
 
-
+Start App
+```shell
+uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+```
 
